@@ -32,8 +32,7 @@ namespace Bucket.EventBus.RabbitMQ
                 Port = _options.Port,
                 UserName = _options.UserName,
                 Password = _options.Password,
-                VirtualHost = _options.VirtualHost,
-                DispatchConsumersAsync = true
+                VirtualHost = _options.VirtualHost
             };
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _retryCount = _options.RetryCount;
@@ -82,6 +81,9 @@ namespace Bucket.EventBus.RabbitMQ
 
             lock (sync_root)
             {
+                if (IsConnected)
+                    return true;
+
                 var policy = RetryPolicy.Handle<SocketException>()
                     .Or<BrokerUnreachableException>()
                     .WaitAndRetry(_retryCount, retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt)), (ex, time) =>
